@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const express = require('express')
 const multer = require("multer");
+const sanitizeFilename = require('sanitize-filename');
 
 const router = express.Router();
 const PYTHON_API_URL = "http://localhost:8000/predictbert"; // Change to your Python API URL
@@ -19,7 +20,9 @@ const storage = multer.diskStorage({
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    const safeFilename = sanitizeFilename(file.originalname); // Sanitize the filename
+    cb(null, safeFilename); // Use the sanitized filename
+    // cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
 
@@ -42,8 +45,10 @@ router.post("/upload", upload.array("resumes"), async (req, res) => {
         });
 
         // Append job details
-        form.append("skills", JSON.stringify(skillsArray));
+        form.append("skills", req.body.skills);
         form.append("job_description", req.body.jobDescription);
+        form.append("education", req.body.education);
+        form.append("experience", req.body.experience);
     
         // Send data to Python API
         const pythonResponse = await axios.post(PYTHON_API_URL, form, {
