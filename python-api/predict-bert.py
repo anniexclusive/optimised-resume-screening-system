@@ -7,7 +7,7 @@ import re
 import nltk
 from nltk.corpus import stopwords
 from flask import Flask, request, jsonify, json
-from skill_edu import education_keywords, skill_dataset
+from skill_edu import education_keywords, skill_dataset, degree_equivalents
 
 app = Flask(__name__)
 
@@ -24,10 +24,11 @@ def extract_text_from_pdf(pdf_file):
         with open(pdf_file, "rb") as file:
             reader = PyPDF2.PdfReader(file)
             text = " ".join([page.extract_text() for page in reader.pages if page.extract_text()])
-    else:  # If the input is already a file object (PdfFileReader accepts file-like objects)
+            text = text.lower()  # Convert to lowercase
+    else:  # If the input is already a file object
         reader = PyPDF2.PdfReader(pdf_file)
         text = " ".join([page.extract_text() for page in reader.pages if page.extract_text()])
-
+        text = text.lower()  # Convert to lowercase
     return text 
 
 def clean_text(text):
@@ -36,106 +37,198 @@ def clean_text(text):
         return ""  # or return some default text
     """Cleans the extracted text by removing special characters, numbers, and stopwords."""
     text = text.lower()  # Convert to lowercase
-    text = re.sub(r'[^a-zA-Z\s]', '', text)  # Remove special characters
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)  # Remove special characters
     text = " ".join([word for word in text.split() if word not in stop_words])  # Remove stopwords
     return text
 
-def to_lower(text_array):
-    if text_array:
-        lowercase_array = list(map(str.lower, text_array))
-        return lowercase_array
-    else:
-        return []
-
 def remove_sensitive_info(text):
     """Removes potential bias-related words from resume text."""
-    bias_keywords = ["male", "female", "black", "white", "asian", "hispanic", "married", "single"]
+    bias_keywords = ["male", "female", "black", "white", "asian", "african", "hispanic", "married", "single"]
     for word in bias_keywords:
         text = text.replace(word, " ")
     return text
 
+def filter_skills(applicant_skills, job_skills):
+    """Extract job matchings skills from applicant skills."""
+    if isinstance(job_skills, str):
+        job_skills = [item.strip() for item in job_skills.split(", ")]
+    skills = {skill for skill in applicant_skills if skill in job_skills}
+    return skills
+
 def extract_entities(text):
     """Efficiently extracts skills, education, and experience from resume text."""
-    extracted_info = {"Skills": set(), "Education": set(), "Experience": set()}
-    # Regex patterns to capture different ways experience is written
+    extracted_info = {"skills": set(), "education": set(), "experience": set()} 
+    
     experience_patterns = [
-        r'(\d+)\s*(?:\+|-)?\s*(?:years?|yrs?)\s*(?:of)?\s*experience',  # e.g., "5 years of experience"
-        r'(\d+)\s*(?:\+|-)?\s*(?:years?|yrs?)\s*(?:in|working in|as)',  # e.g., "3+ years in software development"
-        r'(\d+)-(\d+)\s*years'  # e.g., "3-5 years experience"
+        r'(\d+\s*[+-]?\s*(?:years?|yrs?))',
     ]
 
-    # Convert text to lowercase for case-insensitive matching
     text = text.lower()
-    skill_data = to_lower(skill_dataset)
-    education_data = to_lower(education_keywords)
+    skill_data = {skill.lower() for skill in skill_dataset}  
+    education_data = {edu.lower() for edu in education_keywords}
 
-    # Regex-based experience extraction
-    # Extract matches using regex
+    # Extract experience using regex
     for pattern in experience_patterns:
-        matches = re.findall(pattern, text)
-        if matches:
-            for match in matches:
-                if isinstance(match, tuple):  # Handles cases like "3-5 years"
-                    extracted_info["Experience"].add(f"{match[0]}-{match[1]} years")
-                else:
-                    extracted_info["Experience"].add(f"{match} years")
+        for match in re.findall(pattern, text):
+            extracted_info["experience"].add("-".join(match) if isinstance(match, tuple) else match)
 
     text = clean_text(text)
 
-    # Fast skill matching using set intersection
-    extracted_info["Skills"] = {skill for skill in skill_data if skill in text}
+    # Fast set-based matching for skills and education
+    extracted_info["skills"] = {skill for skill in skill_data if skill in text}
+    extracted_info["education"] = {edu for edu in education_data if edu in text}
 
-    # Fast education matching
-    extracted_info["Education"] = {edu for edu in education_data if edu in text}
+    return extracted_info 
 
+
+def extract_experience(text):
+    """Extracts the numerical years of experience from text."""
+    match = re.findall(r'(\d+)\s*(?:\+|-)?\s*years?', text)
+    if match:
+        return max(map(int, match))  # Take the highest number found
+    return 0  # Default if no experience is mentioned
+
+def compute_experience_score(resume_exp, job_exp, similarity_score):
+    """Computes the final experience score combining numerical experience and text similarity."""
+    resume_years = extract_experience(resume_exp)
+    job_years = extract_experience(job_exp)
+
+    if job_years == 0:  # No required experience specified
+        num_experience_score = 1.0  # Full score if no experience requirement
+    else:
+        num_experience_score = min(resume_years / job_years, 1.5)  # Cap scaling at 1.5 to avoid over-rewarding
+
+    # Multiply structured experience score with text similarity score to balance both
+    final_experience_score = num_experience_score * similarity_score  
+
+    return final_experience_score
+
+def qualification_similarity(resume_qualification, job_qualification):
+    """Boosts similarity for predefined degree equivalents."""
+    score = compute_similarity(resume_qualification, job_qualification)  # Original BERT score
+
+    # Check if any equivalent degree exists in the mappings
+    for degree in resume_qualification.split(", "):
+        for key, equivalents in degree_equivalents.items():
+            if degree in equivalents and key in job_qualification:
+                score += 0.5  # Small boost for recognized equivalent degrees
+    
+    return min(score, 1.0)  # Ensure the score doesn’t exceed 1.0
+
+def compute_similarity(text1, text2):
+    """Compute cosine similarity between two text embeddings."""
+    embedding1 = bert_model.encode(text1).reshape(1, -1)
+    embedding2 = bert_model.encode(text2).reshape(1, -1)
+    return cosine_similarity(embedding1, embedding2)[0][0]
+
+def get_resume_ranking_score(ranking_data, job_data):
+    """Provides a detailed breakdown of resume scoring."""
+    
+    # Compute similarity scores for different sections
+    general_score = compute_similarity(ranking_data["resume_text"], job_data["description"]) * 10  # 10% weight
+    skills_score = compute_similarity(ranking_data["r_skills"], job_data["skills"]) * 40  # 40% weight
+    experience_similarity = compute_similarity(ranking_data["resume_text"], job_data["experience"])  
+    experience_score = compute_experience_score(ranking_data["experience"], job_data["experience"], experience_similarity) * 30  # 30% weight
+    education_score = qualification_similarity(ranking_data["education"], job_data["education"]) * 20  # 20% weight
+    
+
+    # Calculate total score
+    total_score = skills_score + experience_score + education_score + general_score
+
+    # Return breakdown
     return {
-        "skills": list(extracted_info["Skills"]),
-        "education": list(extracted_info["Education"]),
-        "experience": list(extracted_info["Experience"])
+        "ts": round(total_score, 2),
+        "ss": round(skills_score, 2),
+        "ex": round(experience_score, 2),
+        "ed": round(education_score, 2),
+        "ge": round(general_score, 2)
     }
 
-def get_resume_ranking_score(resume_text, job_description):
-    """Ranks resumes using BERT embeddings and cosine similarity."""
-    # Extract and clean resume text
-    cleaned_resume = remove_sensitive_info(clean_text(resume_text)) # remove bias
+def generate_explanation(scores, job_requirements):
+    """
+    Generates a human-readable explanation based on the breakdown of resume scores.
+    """
+    explanation = []
 
-    # Encode the resume and job description
-    resume_embedding = bert_model.encode(cleaned_resume)
-    job_embedding = bert_model.encode(job_description)
+    # Skills Explanation
+    if scores["ss"] > 30:  
+        explanation.append("SS: strong skill.")
+    else:
+        explanation.append("SS: lacks some required skills.")
 
-    # Compute similarity score
-    similarity_score = cosine_similarity([resume_embedding], [job_embedding])[0][0]
+    # Experience Explanation
+    if scores["ex"] > 20:
+        explanation.append("EX: relevant work experience.")
+    else:
+        explanation.append("EX: less experience.")
+
+    # Education Explanation
+    if scores["ed"] > 12:
+        explanation.append("ED: meets the required qualifications.")
+    else:
+        explanation.append("ED: does not fully meet the qualifications.")
+
+    # General Matching Explanation
+    if scores["ge"] > 5:
+        explanation.append("GS: aligns well.")
+    else:
+        explanation.append("GS: does not strongly align .")
+
+    return " ".join(explanation)
+
+
+# def get_resume_ranking_score(resume_text, job_description):
+#     """Ranks resumes using BERT embeddings and cosine similarity."""
+#     # Extract and clean resume text
+#     cleaned_resume = remove_sensitive_info(clean_text(resume_text)) # remove bias
+
+#     # Encode the resume and job description
+#     resume_embedding = bert_model.encode(cleaned_resume)
+#     job_embedding = bert_model.encode(job_description)
+
+#     # Compute similarity score
+#     similarity_score = cosine_similarity([resume_embedding], [job_embedding])[0][0]
     
-    return float(similarity_score)
+#     return float(similarity_score)
 
 
 @app.route('/predictbert', methods=['POST'])
 def predictbert():
-    job_desc = request.form['job_description']
-    skills_json = request.form.get('skills')
-    required_skills = json.loads(skills_json)  # Deserialize the JSON string
+    job_data = {
+        "description": request.form['job_description'],
+        "skills": request.form['skills'],
+        "experience": request.form['experience'],
+        "education": request.form['education']
+    }
+    
     files = request.files.getlist("resumes")
     ranked_resumes = []
-    predefined_skills = set(required_skills)
+    # predefined_skills = set(required_skills)
     
     for file in files:
         filename = file.filename
 
         resume_text = extract_text_from_pdf(file)
-        job_description = clean_text(job_desc)
         
-        similarity_score = get_resume_ranking_score(resume_text, job_description)
+        # similarity_score = get_resume_ranking_score(resume_text, job_data['description'])
         ranking_data = extract_entities(resume_text)
+        ranking_data['r_skills'] = filter_skills(ranking_data['skills'], job_data['skills'])
+        ranking_data = {key: ", ".join(value) for key, value in ranking_data.items()}
+        ranking_data["resume_text"] = remove_sensitive_info(clean_text(resume_text)) # remove bias
         ranking_data["filename"] = filename
-        ranking_data["score"] = round(similarity_score, 2)
 
-        ranked_resumes.append(ranking_data)
+        scores = get_resume_ranking_score(ranking_data, job_data)
+        ranking_data["explanation"] = generate_explanation(scores, job_data)
+        # Drop the key 'resume_text'
+        del ranking_data['resume_text']
+        result = ranking_data | scores
 
-    ranked_resumes.sort(key=lambda x: x["score"], reverse=True)
+        ranked_resumes.append(result)
+
+    ranked_resumes.sort(key=lambda x: x["ts"], reverse=True)
 
     return jsonify(ranked_resumes)
     
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
-
