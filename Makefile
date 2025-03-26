@@ -1,5 +1,5 @@
-ifneq (,$(wildcard .env.local))
-    include .env.local
+ifneq (,$(wildcard .env))
+    include .env
     export
 endif
 
@@ -23,14 +23,14 @@ start-backend:
 	cd $(BACKEND_DIR) && node app.js
 
 start-python:
-	cd $(PYTHON_DIR) && python main.py
+	cd $(PYTHON_DIR) && python app.py
 
 # Use concurrently to run all services together
 start-all:
 	npx concurrently \
 		"cd $(FRONTEND_DIR) && npm start" \
 		"cd $(BACKEND_DIR) && node app.js" \
-		"cd $(PYTHON_DIR) && python predictbert.py"
+		"cd $(PYTHON_DIR) && python app.py"
 
 # Stop all running processes
 .PHONY: stop
