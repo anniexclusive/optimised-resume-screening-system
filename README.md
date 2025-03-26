@@ -16,9 +16,9 @@ make start-all
 
 OR
 
-cd node-resume && node app.js
-cd node-resume/client && npm start
-cd python-api && python predictbert.py
+* cd node-resume && node app.js
+* cd node-resume/client && npm start
+* cd python-api && python predictbert.py
 
 The page is now available under (http://localhost:3000/)
 
