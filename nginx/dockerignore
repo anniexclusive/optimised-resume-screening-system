@@ -1,0 +1,136 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+.github
+
+# CI/CD
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+Jenkinsfile
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+docs/
+.editorconfig
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Testing
+coverage/
+.nyc_output/
+test/
+tests/
+**/__tests__/
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+build/
+dist/
+*.log
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Kubernetes
+k8s/
+*.yaml
+*.yml
+!package.json
+!requirements.txt
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# Uploads and user data
+uploads/
+data/
+
+# Logs
+logs/
+*.log
+
+# Large model files (download at runtime)
+models/*.bin
+models/*.safetensors
+models/*.h5
+models/*.pkl
+models/*.pth
+models/*.pt
+models/*.onnx
+!models/.gitkeep
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Monitoring configs (add at runtime)
+monitoring/
+
+# Nginx configs (add at runtime)  
+nginx/
+
+# Scripts
+setup-cicd.sh
+generate-cicd-files.sh
+*.sh
+
+# Makefile
+Makefile
