@@ -1,0 +1,30 @@
+# Web Framework
+Flask==2.0.1
+Werkzeug==2.0.3  # Flask dependency
+gunicorn==20.1.0
+
+# PDF Processing
+PyPDF2==3.0.1
+
+# NLP & ML
+nltk==3.8.1
+numpy==1.21.6  # Compatible with scikit-learn 1.0.2
+pandas==1.5.3
+scikit-learn==1.0.2
+sentence-transformers==2.2.2
+huggingface-hub==0.8.1  # Required by sentence-transformers
+transformers==4.21.0    # Required by sentence-transformers
+torch==1.11.0          # Required by sentence-transformers
+tokenizers<0.14.0      # Required for compatibility with transformers
+
+# Development Tools
+pytest==7.4.0
+flake8==6.1.0
+python-dotenv==1.0.0
+
+# Additional Dependencies
+tqdm==4.65.0           # Required by sentence-transformers
+click==8.0.4           # Flask dependency
+itsdangerous==2.0.1    # Flask dependency
+Jinja2==3.0.3          # Flask dependency
+MarkupSafe==2.0.1      # Jinja2 dependency
