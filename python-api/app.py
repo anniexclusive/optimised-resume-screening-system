@@ -7,6 +7,10 @@ from utils.scoring import get_resume_ranking_score, generate_explanation, comput
 
 app = Flask(__name__)
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "healthy"}), 200
+
 @app.route('/predictbert', methods=['POST'])
 def predictbert():
     job_data = {
@@ -44,4 +48,4 @@ def predictbert():
     
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

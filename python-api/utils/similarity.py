@@ -2,8 +2,15 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from utils.skill_edu import degree_equivalents
 
-# Load pre-trained BERT model for embeddings
-bert_model = SentenceTransformer('all-MiniLM-L6-v2')
+# Initialize model as None and load it when needed
+bert_model = None
+
+def get_model():
+    """Get or initialize the BERT model."""
+    global bert_model
+    if bert_model is None:
+        bert_model = SentenceTransformer('all-MiniLM-L6-v2')
+    return bert_model
 
 def qualification_similarity(resume_qualification, job_qualification):
     """Boosts similarity for predefined degree equivalents."""
@@ -19,6 +26,7 @@ def qualification_similarity(resume_qualification, job_qualification):
 
 def compute_similarity(text1, text2):
     """Compute cosine similarity between two text embeddings."""
-    embedding1 = bert_model.encode(text1).reshape(1, -1)
-    embedding2 = bert_model.encode(text2).reshape(1, -1)
+    model = get_model()
+    embedding1 = model.encode(text1).reshape(1, -1)
+    embedding2 = model.encode(text2).reshape(1, -1)
     return cosine_similarity(embedding1, embedding2)[0][0]

@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express()
 const path = require('path');
-const PORT = 5000;
+const PORT = process.env.PORT || 3001;
 const cors = require("cors");
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'client/build')));
@@ -15,6 +15,11 @@ const resume = require('./resume');
 app.get('/api', (req, res) => {
   res.json({ message: 'Hello World from Node.js backend!' });
 });
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
 app.use(resume);
 
 app.listen(PORT, () => {
