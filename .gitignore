@@ -1,0 +1,9 @@
+# misc
+.DS_Store
+.env.local
+
+# SOLID Refactoring Documentation
+docs/solid-refactoring/
+
+# Logs
+nginx/logs/
