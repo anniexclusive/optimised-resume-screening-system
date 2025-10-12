@@ -8,14 +8,14 @@ PyPDF2==3.0.1
 
 # NLP & ML
 nltk==3.8.1
-numpy==1.21.6  # Compatible with scikit-learn 1.0.2
+numpy==1.24.3  # Compatible with torch 2.6.0 and scikit-learn
 pandas==1.5.3
-scikit-learn==1.0.2
-sentence-transformers==2.2.2
-huggingface-hub==0.8.1  # Required by sentence-transformers
-transformers==4.21.0    # Required by sentence-transformers
-torch==1.11.0          # Required by sentence-transformers
-tokenizers<0.14.0      # Required for compatibility with transformers
+scikit-learn==1.2.2  # Updated for numpy 1.24.3
+sentence-transformers==3.3.1  # Updated for torch 2.6.0 compatibility
+huggingface-hub==0.26.5       # Required by sentence-transformers (fixed URL construction)
+transformers==4.46.3          # Required by sentence-transformers, updated for torch 2.6.0
+torch==2.6.0                  # Security fix: updated from 2.0.1 (MPS support for M1 Macs)
+tokenizers==0.20.3            # Required for compatibility with transformers 4.46.3
 
 # Development Tools
 pytest==7.4.0

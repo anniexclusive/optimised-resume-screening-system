@@ -1,2 +1,32 @@
 __pycache__/
 .ipynb_checkpoints/
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python artifacts
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# Model cache
+model_cache/

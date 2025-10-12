@@ -4,12 +4,11 @@
  */
 
 const FormData = require('form-data');
-const { httpClient } = require('./httpClient');
-const { fileService } = require('./fileService');
+const fs = require('fs');
 const config = require('../config/api.config');
 
 class ResumeService {
-  constructor(httpClientInstance = httpClient, fileServiceInstance = fileService) {
+  constructor(httpClientInstance, fileServiceInstance) {
     this.httpClient = httpClientInstance;
     this.fileService = fileServiceInstance;
     this.pythonApiUrl = config.getPythonApiUrl(config.pythonApi.endpoints.predictBert);
@@ -57,8 +56,9 @@ class ResumeService {
       throw new Error('At least one resume file is required');
     }
 
-    if (files.length > this.fileService.maxFiles) {
-      throw new Error(`Maximum ${this.fileService.maxFiles} files allowed`);
+    const maxFiles = config.upload.maxFiles;
+    if (files.length > maxFiles) {
+      throw new Error(`Maximum ${maxFiles} files allowed`);
     }
 
     // Validate required job fields
@@ -77,11 +77,11 @@ class ResumeService {
     const formData = new FormData();
 
     // Append resume files
-    const filePaths = this.fileService.getFilePaths(files);
-    const fileStreams = this.fileService.createReadStreams(filePaths);
-
-    fileStreams.forEach(stream => {
-      formData.append('resumes', stream);
+    files.forEach(file => {
+      const stream = fs.createReadStream(file.path);
+      formData.append('resumes', stream, {
+        filename: file.originalname || file.filename
+      });
     });
 
     // Append job details
@@ -131,8 +131,11 @@ class ResumeService {
    */
   async cleanupFiles(files) {
     try {
-      const filePaths = this.fileService.getFilePaths(files);
-      this.fileService.deleteFiles(filePaths);
+      files.forEach(file => {
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+      });
       console.log('[ResumeService] Cleaned up uploaded files');
     } catch (error) {
       console.error('[ResumeService] Error cleaning up files:', error.message);
@@ -140,10 +143,6 @@ class ResumeService {
   }
 }
 
-// Export singleton instance
-const resumeService = new ResumeService();
-
 module.exports = {
-  ResumeService,
-  resumeService
+  ResumeService
 };
