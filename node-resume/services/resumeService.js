@@ -11,7 +11,7 @@ class ResumeService {
   constructor(httpClientInstance, fileServiceInstance) {
     this.httpClient = httpClientInstance;
     this.fileService = fileServiceInstance;
-    this.pythonApiUrl = config.getPythonApiUrl(config.pythonApi.endpoints.predictBert);
+    this.pythonApiUrl = `${config.pythonApi.baseUrl}${config.pythonApi.endpoints.predictBert}`;
   }
 
   /**

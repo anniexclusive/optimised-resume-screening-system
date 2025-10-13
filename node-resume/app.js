@@ -1,12 +1,17 @@
 const express = require('express')
 const app = express()
 const path = require('path');
-const PORT = process.env.PORT || 3001;
 const cors = require("cors");
+const config = require('./config/api.config');
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'client/build')));
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: config.cors.origin,
+  credentials: config.cors.credentials
+}));
 app.use(express.json());
 
 const resume = require('./resume');
@@ -22,6 +27,7 @@ app.get('/health', (req, res) => {
 
 app.use(resume);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(config.server.port, () => {
+  console.log(`Server is running on http://${config.server.host}:${config.server.port}`);
+  console.log(`Environment: ${config.env}`);
 });
