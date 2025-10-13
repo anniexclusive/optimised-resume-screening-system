@@ -6,7 +6,7 @@ Implements Dependency Inversion Principle
 
 from abc import ABC, abstractmethod
 from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 from config.model_config import BERT_CONFIG, MODEL_LOAD_CONFIG
 
 
@@ -85,9 +85,16 @@ class BERTSimilarityCalculator(SimilarityCalculator):
         Returns:
             float: Similarity score between 0 and 1
         """
-        embedding1 = self.encode(text1).reshape(1, -1)
-        embedding2 = self.encode(text2).reshape(1, -1)
-        similarity = cosine_similarity(embedding1, embedding2)[0][0]
+        embedding1 = self.encode(text1)
+        embedding2 = self.encode(text2)
+
+        # Compute cosine similarity using numpy
+        # cosine_similarity = dot(A, B) / (||A|| * ||B||)
+        dot_product = np.dot(embedding1, embedding2)
+        norm1 = np.linalg.norm(embedding1)
+        norm2 = np.linalg.norm(embedding2)
+        similarity = dot_product / (norm1 * norm2)
+
         return float(similarity)
 
 
