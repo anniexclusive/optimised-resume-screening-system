@@ -18,6 +18,9 @@ tokenizers==0.20.3            # Required for compatibility with transformers 4.4
 
 # Development Tools
 pytest==7.4.0
+pytest-xdist==3.3.1   # Parallel test execution
+pytest-timeout==2.1.0 # Test timeout management
+pytest-cov==4.1.0     # Code coverage reporting
 flake8==6.1.0
 python-dotenv==1.0.0
 
