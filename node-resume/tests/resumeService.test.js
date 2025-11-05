@@ -19,9 +19,12 @@ describe('ResumeService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock HTTP client
+    // Mock HTTP client with all methods including new resilient ones
     mockHttpClient = {
-      postFormData: jest.fn()
+      postFormData: jest.fn(),
+      postFormDataWithRetry: jest.fn(),
+      postFormDataResilient: jest.fn(),
+      getCircuitBreakerState: jest.fn(() => ({ state: 'CLOSED', failureCount: 0 }))
     };
 
     // Mock file service
@@ -215,11 +218,11 @@ describe('ResumeService', () => {
         { filename: 'resume.pdf', ts: 85, ss: 35, ex: 25, ed: 15, ge: 10 }
       ];
 
-      mockHttpClient.postFormData.mockResolvedValue(mockResults);
+      mockHttpClient.postFormDataResilient.mockResolvedValue(mockResults);
 
       const results = await resumeService.screenResumes(jobData, files);
 
-      expect(mockHttpClient.postFormData).toHaveBeenCalled();
+      expect(mockHttpClient.postFormDataResilient).toHaveBeenCalled();
       expect(results).toEqual(mockResults);
     });
 
@@ -234,7 +237,7 @@ describe('ResumeService', () => {
         expect(error.message).toContain('Missing required fields');
       }
 
-      expect(mockHttpClient.postFormData).not.toHaveBeenCalled();
+      expect(mockHttpClient.postFormDataResilient).not.toHaveBeenCalled();
     });
 
     it('should handle HTTP client errors', async () => {
@@ -244,7 +247,7 @@ describe('ResumeService', () => {
         data: { detail: 'Processing failed' }
       };
 
-      mockHttpClient.postFormData.mockRejectedValue(error);
+      mockHttpClient.postFormDataResilient.mockRejectedValue(error);
 
       await expect(
         resumeService.screenResumes(jobData, files)
@@ -256,7 +259,7 @@ describe('ResumeService', () => {
 
     it('should handle generic errors', async () => {
       const error = new Error('Unexpected error');
-      mockHttpClient.postFormData.mockRejectedValue(error);
+      mockHttpClient.postFormDataResilient.mockRejectedValue(error);
 
       await expect(
         resumeService.screenResumes(jobData, files)

@@ -8,6 +8,7 @@ const path = require('path');
 const multer = require('multer');
 const sanitizeFilename = require('sanitize-filename');
 const config = require('../config/api.config');
+const logger = require('../utils/logger');
 
 class FileService {
   constructor() {
@@ -26,7 +27,7 @@ class FileService {
   ensureUploadDirectory() {
     if (!fs.existsSync(this.uploadDir)) {
       fs.mkdirSync(this.uploadDir, { recursive: true });
-      console.log(`[FileService] Created upload directory: ${this.uploadDir}`);
+      logger.info(`[FileService] Created upload directory: ${this.uploadDir}`);
     }
   }
 
@@ -105,12 +106,12 @@ class FileService {
     try {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
-        console.log(`[FileService] Deleted file: ${filePath}`);
+        logger.debug(`[FileService] Deleted file: ${filePath}`);
         return true;
       }
       return false;
     } catch (error) {
-      console.error(`[FileService] Error deleting file ${filePath}:`, error.message);
+      logger.error(`[FileService] Error deleting file ${filePath}:`, { error: error.message });
       return false;
     }
   }
@@ -121,7 +122,7 @@ class FileService {
   deleteFiles(filePaths) {
     const results = filePaths.map(filePath => this.deleteFile(filePath));
     const deletedCount = results.filter(r => r).length;
-    console.log(`[FileService] Deleted ${deletedCount}/${filePaths.length} files`);
+    logger.info(`[FileService] Deleted ${deletedCount}/${filePaths.length} files`);
     return deletedCount;
   }
 
@@ -147,10 +148,10 @@ class FileService {
         }
       });
 
-      console.log(`[FileService] Cleanup: deleted ${deletedCount} old files`);
+      logger.info(`[FileService] Cleanup: deleted ${deletedCount} old files`);
       return deletedCount;
     } catch (error) {
-      console.error('[FileService] Cleanup error:', error.message);
+      logger.error('[FileService] Cleanup error:', { error: error.message });
       return 0;
     }
   }

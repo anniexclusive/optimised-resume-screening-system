@@ -5,6 +5,7 @@
 
 const express = require('express');
 const { fileService, resumeService } = require('./services');
+const logger = require('./utils/logger');
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const upload = fileService.getUploadMiddleware();
  */
 router.post("/upload", upload.array("resumes"), async (req, res) => {
     try {
-        console.log("[Route] Received upload request");
+        logger.info("[Route] Received upload request");
 
         // Extract job data from request
         const jobData = {
@@ -30,14 +31,11 @@ router.post("/upload", upload.array("resumes"), async (req, res) => {
         // Process resumes using resume service
         const results = await resumeService.screenResumes(jobData, req.files);
 
-        // Optional: Clean up files after processing
-        // await resumeService.cleanupFiles(req.files);
-
         // Return results
         res.json(results);
 
     } catch (error) {
-        console.error("[Route] Error:", error.message);
+        logger.error("[Route] Error:", { error: error.message, stack: error.stack });
 
         // Handle errors appropriately
         const statusCode = error.status || 500;
@@ -45,6 +43,12 @@ router.post("/upload", upload.array("resumes"), async (req, res) => {
             message: error.message || "Server Error",
             details: error.details || null
         });
+    } finally {
+        // CRITICAL: Always clean up uploaded files, even if processing fails
+        // This prevents disk space exhaustion from failed uploads
+        if (req.files && req.files.length > 0) {
+            await resumeService.cleanupFiles(req.files);
+        }
     }
 });
 

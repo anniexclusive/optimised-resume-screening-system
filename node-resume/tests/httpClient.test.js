@@ -280,4 +280,62 @@ describe('HttpClient', () => {
       });
     });
   });
+
+  describe('retryWithBackoff - SRE Resilience Tests', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should succeed on first attempt', async () => {
+      const mockFn = jest.fn().mockResolvedValue('success');
+
+      const result = await httpClient.retryWithBackoff(mockFn);
+
+      expect(result).toBe('success');
+      expect(mockFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should retry on retryable status codes', async () => {
+      const mockFn = jest.fn()
+        .mockRejectedValueOnce({ status: 503, message: 'Service unavailable' })
+        .mockResolvedValue('success');
+
+      const result = await httpClient.retryWithBackoff(mockFn, { maxRetries: 1, retryDelay: 10 });
+
+      expect(result).toBe('success');
+      expect(mockFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not retry on non-retryable status codes', async () => {
+      const mockFn = jest.fn().mockRejectedValue({ status: 400, message: 'Bad request' });
+
+      await expect(
+        httpClient.retryWithBackoff(mockFn, { maxRetries: 3 })
+      ).rejects.toMatchObject({ status: 400 });
+
+      expect(mockFn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should stop after max retries', async () => {
+      const mockFn = jest.fn().mockRejectedValue({ status: 503, message: 'Service unavailable' });
+
+      await expect(
+        httpClient.retryWithBackoff(mockFn, { maxRetries: 2, retryDelay: 10 })
+      ).rejects.toMatchObject({ status: 503 });
+
+      expect(mockFn).toHaveBeenCalledTimes(3); // Initial + 2 retries
+    });
+  });
+
+  describe('postFormDataResilient - Full SRE Stack', () => {
+    it('should call circuit breaker with retry logic', async () => {
+      const mockFormData = { getHeaders: () => ({}) };
+      mockAxiosInstance.post.mockResolvedValue({ data: 'success' });
+
+      const result = await httpClient.postFormDataResilient('/test', mockFormData);
+
+      expect(result).toBe('success');
+      expect(mockAxiosInstance.post).toHaveBeenCalled();
+    });
+  });
 });
