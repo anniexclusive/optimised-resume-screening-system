@@ -9,7 +9,7 @@ import os
 SCORING_WEIGHTS = {
     'general': float(os.getenv('WEIGHT_GENERAL', 0.10)),      # 10% weight
     'skills': float(os.getenv('WEIGHT_SKILLS', 0.40)),        # 40% weight
-    'experience': float(os.getenv('WEIGHT_EXPERIENCE', 0.30)), # 30% weight
+    'experience': float(os.getenv('WEIGHT_EXPERIENCE', 0.30)),  # 30% weight
     'education': float(os.getenv('WEIGHT_EDUCATION', 0.20))   # 20% weight
 }
 
@@ -42,11 +42,13 @@ EXPERIENCE_CONFIG = {
 # Degree equivalents boost score
 DEGREE_EQUIVALENTS_BOOST = float(os.getenv('DEGREE_BOOST', 0.5))
 
+
 def validate_weights():
     """Validate that scoring weights sum to 1.0"""
     total = sum(SCORING_WEIGHTS.values())
     if abs(total - 1.0) > 0.01:  # Allow small floating point errors
         raise ValueError(f"Scoring weights must sum to 1.0, got {total}")
+
 
 # Validate on module load
 validate_weights()

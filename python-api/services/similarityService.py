@@ -48,13 +48,13 @@ class BERTSimilarityCalculator(SimilarityCalculator):
     def _load_model(self):
         """Load the BERT model (lazy loading)"""
         if self._model is None:
-            print(f"[SimilarityService] Loading model: {self.model_name}")
+            print("[SimilarityService] Loading model: {}".format(self.model_name))
             self._model = SentenceTransformer(
                 self.model_name,
                 device=self.device,
                 cache_folder=self.cache_dir
             )
-            print(f"[SimilarityService] Model loaded successfully")
+            print("[SimilarityService] Model loaded successfully")
         return self._model
 
     @property

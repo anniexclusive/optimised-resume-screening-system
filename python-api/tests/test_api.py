@@ -4,7 +4,6 @@ Integration tests for Python API endpoints
 
 import pytest
 import io
-from flask import Flask
 from app import app
 
 
@@ -18,8 +17,9 @@ def client():
 
 @pytest.fixture
 def sample_pdf_file():
-    """Create a mock PDF file for testing"""
-    # Create a minimal PDF content
+    """Create a mock PDF file for testing with sufficient content"""
+    # Create a realistic PDF with enough text content (>50 chars minimum)
+    # This simulates a real resume with skills, experience, and education
     pdf_content = b"""%PDF-1.4
 1 0 obj
 <<
@@ -49,13 +49,63 @@ endobj
 endobj
 4 0 obj
 <<
-/Length 44
+/Length 450
 >>
 stream
 BT
+/F1 16 Tf
+100 750 Td
+(John Doe - Software Engineer) Tj
+0 -30 Td
 /F1 12 Tf
-100 700 Td
-(Python Developer) Tj
+(Email: john.doe@example.com | Phone: 555-1234) Tj
+0 -30 Td
+(PROFESSIONAL SUMMARY) Tj
+0 -20 Td
+/F1 10 Tf
+(Experienced Python developer with 5 years of software development experience.) Tj
+0 -15 Td
+(Strong expertise in Flask, Django, Machine Learning, and cloud technologies.) Tj
+0 -15 Td
+(Bachelor of Science in Computer Science from State University.) Tj
+0 -30 Td
+/F1 12 Tf
+(TECHNICAL SKILLS) Tj
+0 -20 Td
+/F1 10 Tf
+(Languages: Python, JavaScript, SQL) Tj
+0 -15 Td
+(Frameworks: Flask, Django, React) Tj
+0 -15 Td
+(Tools: Docker, Kubernetes, AWS, Git) Tj
+0 -15 Td
+(Machine Learning: TensorFlow, PyTorch, scikit-learn) Tj
+0 -30 Td
+/F1 12 Tf
+(WORK EXPERIENCE) Tj
+0 -20 Td
+/F1 10 Tf
+(Senior Python Developer at Tech Corp \\(2020-Present\\)) Tj
+0 -15 Td
+(- Developed ML-powered applications using Flask and PyTorch) Tj
+0 -15 Td
+(- Implemented RESTful APIs serving 1M+ requests per day) Tj
+0 -15 Td
+(- Led migration to microservices architecture using Docker) Tj
+0 -30 Td
+(Python Developer at StartupXYZ \\(2018-2020\\)) Tj
+0 -15 Td
+(- Built data processing pipelines with Pandas and NumPy) Tj
+0 -15 Td
+(- Created automated testing frameworks using pytest) Tj
+0 -30 Td
+/F1 12 Tf
+(EDUCATION) Tj
+0 -20 Td
+/F1 10 Tf
+(Bachelor of Science in Computer Science) Tj
+0 -15 Td
+(State University, 2018, GPA: 3.8/4.0) Tj
 ET
 endstream
 endobj
@@ -73,14 +123,14 @@ xref
 0000000058 00000 n
 0000000115 00000 n
 0000000270 00000 n
-0000000363 00000 n
+0000000769 00000 n
 trailer
 <<
 /Size 6
 /Root 1 0 R
 >>
 startxref
-451
+857
 %%EOF"""
 
     return (io.BytesIO(pdf_content), 'test_resume.pdf')
@@ -134,11 +184,15 @@ class TestPredictBertEndpoint:
         result = response.get_json()
 
         # Check response structure
-        assert isinstance(result, list)
-        assert len(result) > 0
+        assert isinstance(result, dict)
+        assert 'success' in result
+        assert 'results' in result
+        assert result['success'] is True
+        assert isinstance(result['results'], list)
+        assert len(result['results']) > 0
 
         # Check first resume result
-        resume_result = result[0]
+        resume_result = result['results'][0]
         assert 'filename' in resume_result
         assert 'ts' in resume_result  # Total score
         assert 'ss' in resume_result  # Skills score
@@ -282,8 +336,10 @@ class TestPredictBertEndpoint:
         result = response.get_json()
 
         # Should return results for 2 resumes
-        assert isinstance(result, list)
-        assert len(result) == 2
+        assert isinstance(result, dict)
+        assert result['success'] is True
+        assert isinstance(result['results'], list)
+        assert len(result['results']) == 2
 
     def test_predictbert_results_sorted_by_score(self, client, sample_pdf_file, valid_job_data):
         """Test that results are sorted by total score descending"""
@@ -314,9 +370,12 @@ class TestPredictBertEndpoint:
         result = response.get_json()
 
         # Verify results are sorted by ts (total score) descending
-        if len(result) > 1:
-            for i in range(len(result) - 1):
-                assert result[i]['ts'] >= result[i + 1]['ts']
+        assert isinstance(result, dict)
+        assert result['success'] is True
+        results_list = result['results']
+        if len(results_list) > 1:
+            for i in range(len(results_list) - 1):
+                assert results_list[i]['ts'] >= results_list[i + 1]['ts']
 
 
 class TestScoring:
@@ -340,7 +399,12 @@ class TestScoring:
             content_type='multipart/form-data'
         )
 
-        result = response.get_json()[0]
+        json_response = response.get_json()
+        assert isinstance(json_response, dict)
+        assert json_response['success'] is True
+        assert len(json_response['results']) > 0
+
+        result = json_response['results'][0]
 
         # Each component should be >= 0
         assert result['ss'] >= 0  # Skills score
@@ -371,7 +435,12 @@ class TestScoring:
             content_type='multipart/form-data'
         )
 
-        result = response.get_json()[0]
+        json_response = response.get_json()
+        assert isinstance(json_response, dict)
+        assert json_response['success'] is True
+        assert len(json_response['results']) > 0
+
+        result = json_response['results'][0]
 
         # Explanation should exist and not be empty
         assert 'explanation' in result
