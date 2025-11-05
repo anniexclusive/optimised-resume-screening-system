@@ -1,0 +1,48 @@
+# Python API Test Dockerfile
+# Used for running tests, linting, and code quality checks
+
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install Python dependencies including test dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Install additional test/lint dependencies
+RUN pip install --no-cache-dir \
+    pytest==7.4.0 \
+    pytest-cov==4.1.0 \
+    pytest-xdist==3.3.1 \
+    pytest-timeout==2.1.0 \
+    flake8==6.1.0 \
+    pylint==3.0.3 \
+    black==23.12.1
+
+# Create non-root user
+RUN useradd -m -u 1001 testuser && \
+    chown -R testuser:testuser /app
+
+# Create NLTK data directory for testuser
+RUN mkdir -p /home/testuser/nltk_data && \
+    chown -R testuser:testuser /home/testuser/nltk_data
+
+USER testuser
+
+# Download NLTK data as testuser
+RUN python3 -c "import nltk; nltk.download('stopwords'); nltk.download('punkt')"
+
+# Default command runs tests
+CMD ["pytest", "-v", "--cov=.", "--cov-report=term-missing", "--cov-report=html"]
