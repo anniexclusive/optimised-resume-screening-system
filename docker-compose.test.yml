@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # Python API Tests
+  python-api-test:
+    build:
+      context: ./python-api
+      dockerfile: Dockerfile.test
+    container_name: python-api-test
+    environment:
+      - FLASK_ENV=test
+      - PYTHONPATH=/app
+    volumes:
+      - ./python-api:/app
+      - python-test-cache:/app/.pytest_cache
+    command: pytest -v --cov=. --cov-report=term-missing --cov-report=html --cov-report=xml
+    networks:
+      - test-network
+
+  # Python API Linting
+  python-api-lint:
+    build:
+      context: ./python-api
+      dockerfile: Dockerfile.test
+    container_name: python-api-lint
+    volumes:
+      - ./python-api:/app
+    command: sh -c "flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics && flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics"
+    networks:
+      - test-network
+
+  # Python API Code Formatting Check
+  python-api-format:
+    build:
+      context: ./python-api
+      dockerfile: Dockerfile.test
+    container_name: python-api-format
+    volumes:
+      - ./python-api:/app
+    command: black --check --diff .
+    networks:
+      - test-network
+
+  # Node.js Backend Tests
+  backend-test:
+    build:
+      context: ./node-resume
+      dockerfile: Dockerfile.test
+    container_name: backend-test
+    environment:
+      - NODE_ENV=test
+      - PYTHON_API_URL=http://mock-python-api:5000
+    volumes:
+      - ./node-resume:/app
+      - /app/node_modules
+      - backend-test-coverage:/app/coverage
+    command: npm test -- --coverage --watchAll=false
+    networks:
+      - test-network
+
+  # Node.js Backend Linting
+  backend-lint:
+    build:
+      context: ./node-resume
+      dockerfile: Dockerfile.test
+    container_name: backend-lint
+    volumes:
+      - ./node-resume:/app
+      - /app/node_modules
+    command: npm run lint
+    networks:
+      - test-network
+
+  # Node.js Backend Code Formatting Check
+  backend-format:
+    build:
+      context: ./node-resume
+      dockerfile: Dockerfile.test
+    container_name: backend-format
+    volumes:
+      - ./node-resume:/app
+      - /app/node_modules
+    command: npm run format:check
+    networks:
+      - test-network
+
+volumes:
+  python-test-cache:
+    driver: local
+  backend-test-coverage:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge

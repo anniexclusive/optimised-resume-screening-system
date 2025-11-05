@@ -10,11 +10,21 @@ services:
       - "5000:5000"
     environment:
       - FLASK_ENV=${FLASK_ENV:-development}
+      - FLASK_DEBUG=false
       - MODEL_PATH=/app/models
     volumes:
       - ./python-api:/app
       - python-models:/app/models
     restart: unless-stopped
+    # Resource limits - BERT model needs ~1.5GB RAM + processing overhead
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 3G  # BERT model (1.5GB) + processing + overhead
+        reservations:
+          cpus: '1.0'
+          memory: 1.5G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -36,6 +46,8 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PYTHON_API_URL=http://python-api:5000
       - PORT=3001
+      - API_TIMEOUT=120000
+      - ENABLE_AUTH=false
     volumes:
       - ./node-resume:/app
       - /app/node_modules
@@ -43,6 +55,15 @@ services:
       python-api:
         condition: service_healthy
     restart: unless-stopped
+    # Resource limits for Node.js backend
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/health"]
       interval: 30s
@@ -66,6 +87,15 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
+    # Resource limits for static frontend (nginx)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.25'
+          memory: 64M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:80/health"]
       interval: 30s
@@ -92,6 +122,15 @@ services:
       - backend
       - python-api
     restart: unless-stopped
+    # Resource limits for nginx reverse proxy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.25'
+          memory: 64M
     networks:
       - resume-network
 
