@@ -8,10 +8,14 @@ function Home() {
     const handleResult = (result) => {
         console.log('Data received in Home.jsx', result);
 
-        if (result && result) {
+        // Handle new API response format with results array
+        if (result && result.results && Array.isArray(result.results)) {
+            setTableData([...result.results]);
+        } else if (result && Array.isArray(result)) {
+            // Fallback for old format
             setTableData([...result]);
         }
-        
+
     };
     
     return (
