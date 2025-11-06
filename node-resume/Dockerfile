@@ -25,8 +25,6 @@ COPY app.js ./
 COPY resume.js ./
 COPY config/ ./config/
 COPY services/ ./services/
-COPY utils/ ./utils/
-COPY middleware/ ./middleware/
 
 # Create uploads directory
 RUN mkdir -p uploads
