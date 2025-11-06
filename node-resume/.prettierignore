@@ -1,0 +1,5 @@
+node_modules
+coverage
+client/
+*.test.js
+package-lock.json

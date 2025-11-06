@@ -154,7 +154,7 @@ class TestConfigurationValidation(unittest.TestCase):
         self.assertIsNotNone(BERT_CONFIG)
         self.assertIsNotNone(MODEL_LOAD_CONFIG)
         self.assertIsNotNone(FLASK_CONFIG)
-        
+
         # Scoring config
         self.assertIsNotNone(SCORING_WEIGHTS)
         self.assertIsNotNone(THRESHOLDS)

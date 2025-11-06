@@ -1,6 +1,5 @@
 /**
  * Resume Routes
- * Refactored to use service layer (SOLID principles)
  */
 
 const express = require('express');
@@ -30,9 +29,6 @@ router.post("/upload", upload.array("resumes"), async (req, res) => {
         // Process resumes using resume service
         const results = await resumeService.screenResumes(jobData, req.files);
 
-        // Optional: Clean up files after processing
-        // await resumeService.cleanupFiles(req.files);
-
         // Return results
         res.json(results);
 
@@ -45,6 +41,11 @@ router.post("/upload", upload.array("resumes"), async (req, res) => {
             message: error.message || "Server Error",
             details: error.details || null
         });
+    } finally {
+        // Always clean up uploaded files
+        if (req.files && req.files.length > 0) {
+            await resumeService.cleanupFiles(req.files);
+        }
     }
 });
 

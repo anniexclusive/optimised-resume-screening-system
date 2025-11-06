@@ -26,7 +26,7 @@ class TestGetResumeRankingScore(unittest.TestCase):
             "experience": 3,  # Numeric value (years)
             "education": "BS Computer Science"
         }
-        
+
         job_data = {
             "description": "Python developer needed",
             "skills": "Python, Flask",
@@ -60,7 +60,7 @@ class TestGetResumeRankingScore(unittest.TestCase):
             "experience": 2,  # Numeric value
             "education": "Test"
         }
-        
+
         job_data = {
             "description": "Test",
             "skills": "Test",

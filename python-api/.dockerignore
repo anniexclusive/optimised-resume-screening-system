@@ -29,8 +29,11 @@ ENV/
 docs/
 
 # Test files (only needed for dev)
-tests/fixtures/
+tests/
 *.ipynb
+.ipynb_checkpoints/
+.tox/
+pytest.ini
 
 # Large data files
 *.csv

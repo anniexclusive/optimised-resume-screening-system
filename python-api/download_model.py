@@ -6,6 +6,7 @@ Pre-downloads the BERT model to avoid runtime errors
 import os
 import sys
 
+
 def download_model():
     """Download the BERT model for sentence transformers"""
 

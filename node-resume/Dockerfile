@@ -1,4 +1,4 @@
-# Backend Dockerfile for Node.js service
+# Backend Dockerfile for Node.js service - Optimized multi-stage build
 
 FROM node:18-alpine AS builder
 
@@ -7,20 +7,27 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --omit=dev
-
-# Copy source code
-COPY . .
+# Install dependencies (production only)
+RUN npm ci --omit=dev --ignore-scripts && \
+    npm cache clean --force
 
 # Production stage
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy from builder
+# Copy only node_modules from builder
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app .
+
+# Copy only necessary application files (exclude tests, docs, etc.)
+COPY package.json ./
+COPY app.js ./
+COPY resume.js ./
+COPY config/ ./config/
+COPY services/ ./services/
+
+# Create uploads directory
+RUN mkdir -p uploads
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \

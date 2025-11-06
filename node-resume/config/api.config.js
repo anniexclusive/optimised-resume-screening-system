@@ -18,10 +18,9 @@ module.exports = {
     pythonApi: {
         baseUrl: process.env.PYTHON_API_URL || 'http://localhost:5000',
         endpoints: {
-            predictBert: '/predictbert',
-            health: '/health'
+            predictBert: '/predictbert'
         },
-        timeout: parseInt(process.env.API_TIMEOUT) || 30000
+        timeout: parseInt(process.env.API_TIMEOUT) || 120000 // 2 minutes for ML processing
     },
 
     // File Upload Configuration

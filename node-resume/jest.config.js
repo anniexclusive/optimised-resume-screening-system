@@ -1,7 +1,55 @@
+/**
+ * Jest Configuration
+ * For comprehensive unit testing of Node.js services
+ */
+
 module.exports = {
+  // Test environment
   testEnvironment: 'node',
+
+  // Test match patterns
+  testMatch: [
+    '**/tests/**/*.test.js',
+    '**/__tests__/**/*.js'
+  ],
+
+  // Ignore patterns
   coveragePathIgnorePatterns: ['/node_modules/'],
   testPathIgnorePatterns: ['/node_modules/', '/client/'],
-  testTimeout: 30000,
-  verbose: true
+
+  // Coverage configuration
+  collectCoverageFrom: [
+    'services/**/*.js',
+    'config/**/*.js',
+    '!**/node_modules/**',
+    '!**/tests/**'
+  ],
+
+  coverageThreshold: {
+    global: {
+      branches: 75,
+      functions: 75,
+      lines: 75,
+      statements: 75
+    }
+  },
+
+  // Coverage reporters
+  coverageReporters: [
+    'text',
+    'text-summary',
+    'html',
+    'lcov'
+  ],
+
+  // Setup files
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
+
+  // Verbose output
+  verbose: true,
+
+  // Test timeout
+  testTimeout: 30000
 };

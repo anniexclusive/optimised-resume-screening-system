@@ -105,7 +105,6 @@ class FileService {
     try {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
-        console.log(`[FileService] Deleted file: ${filePath}`);
         return true;
       }
       return false;
