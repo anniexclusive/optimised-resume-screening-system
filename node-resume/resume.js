@@ -1,11 +1,9 @@
 /**
  * Resume Routes
- * Refactored to use service layer (SOLID principles)
  */
 
 const express = require('express');
 const { fileService, resumeService } = require('./services');
-const logger = require('./utils/logger');
 
 const router = express.Router();
 
@@ -18,7 +16,7 @@ const upload = fileService.getUploadMiddleware();
  */
 router.post("/upload", upload.array("resumes"), async (req, res) => {
     try {
-        logger.info("[Route] Received upload request");
+        console.log("[Route] Received upload request");
 
         // Extract job data from request
         const jobData = {
@@ -35,7 +33,7 @@ router.post("/upload", upload.array("resumes"), async (req, res) => {
         res.json(results);
 
     } catch (error) {
-        logger.error("[Route] Error:", { error: error.message, stack: error.stack });
+        console.error("[Route] Error:", error.message);
 
         // Handle errors appropriately
         const statusCode = error.status || 500;
@@ -44,8 +42,7 @@ router.post("/upload", upload.array("resumes"), async (req, res) => {
             details: error.details || null
         });
     } finally {
-        // CRITICAL: Always clean up uploaded files, even if processing fails
-        // This prevents disk space exhaustion from failed uploads
+        // Always clean up uploaded files
         if (req.files && req.files.length > 0) {
             await resumeService.cleanupFiles(req.files);
         }

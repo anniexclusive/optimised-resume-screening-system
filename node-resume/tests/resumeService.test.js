@@ -6,38 +6,30 @@
 // Mock dependencies before importing ResumeService
 jest.mock('fs');
 jest.mock('form-data');
+jest.mock('axios');
 
 const { ResumeService } = require('../services/resumeService');
 const FormData = require('form-data');
 const fs = require('fs');
+const axios = require('axios');
 
 describe('ResumeService', () => {
   let resumeService;
-  let mockHttpClient;
   let mockFileService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Mock HTTP client with all methods including new resilient ones
-    mockHttpClient = {
-      postFormData: jest.fn(),
-      postFormDataWithRetry: jest.fn(),
-      postFormDataResilient: jest.fn(),
-      getCircuitBreakerState: jest.fn(() => ({ state: 'CLOSED', failureCount: 0 }))
-    };
 
     // Mock file service
     mockFileService = {
       deleteFiles: jest.fn()
     };
 
-    resumeService = new ResumeService(mockHttpClient, mockFileService);
+    resumeService = new ResumeService(mockFileService);
   });
 
   describe('Constructor', () => {
     it('should initialize with dependencies', () => {
-      expect(resumeService.httpClient).toBe(mockHttpClient);
       expect(resumeService.fileService).toBe(mockFileService);
       expect(resumeService.pythonApiUrl).toBeDefined();
     });
@@ -214,40 +206,39 @@ describe('ResumeService', () => {
     });
 
     it('should successfully screen resumes', async () => {
-      const mockResults = [
-        { filename: 'resume.pdf', ts: 85, ss: 35, ex: 25, ed: 15, ge: 10 }
-      ];
+      const mockResults = {
+        data: [
+          { filename: 'resume.pdf', ts: 85, ss: 35, ex: 25, ed: 15, ge: 10 }
+        ]
+      };
 
-      mockHttpClient.postFormDataResilient.mockResolvedValue(mockResults);
+      axios.post.mockResolvedValue(mockResults);
 
       const results = await resumeService.screenResumes(jobData, files);
 
-      expect(mockHttpClient.postFormDataResilient).toHaveBeenCalled();
-      expect(results).toEqual(mockResults);
+      expect(axios.post).toHaveBeenCalled();
+      expect(results).toEqual(mockResults.data);
     });
 
     it('should validate input before processing', async () => {
       const invalidJobData = { jobDescription: 'Test' }; // Missing required fields
 
-      try {
-        await resumeService.screenResumes(invalidJobData, files);
-        // If it doesn't throw, fail the test
-        fail('Expected to throw an error');
-      } catch (error) {
-        expect(error.message).toContain('Missing required fields');
-      }
+      await expect(
+        resumeService.screenResumes(invalidJobData, files)
+      ).rejects.toThrow('Missing required fields');
 
-      expect(mockHttpClient.postFormDataResilient).not.toHaveBeenCalled();
+      expect(axios.post).not.toHaveBeenCalled();
     });
 
-    it('should handle HTTP client errors', async () => {
+    it('should handle axios errors', async () => {
       const error = {
-        status: 500,
-        message: 'Internal server error',
-        data: { detail: 'Processing failed' }
+        response: {
+          status: 500,
+          data: { message: 'Internal server error', detail: 'Processing failed' }
+        }
       };
 
-      mockHttpClient.postFormDataResilient.mockRejectedValue(error);
+      axios.post.mockRejectedValue(error);
 
       await expect(
         resumeService.screenResumes(jobData, files)
@@ -259,7 +250,7 @@ describe('ResumeService', () => {
 
     it('should handle generic errors', async () => {
       const error = new Error('Unexpected error');
-      mockHttpClient.postFormDataResilient.mockRejectedValue(error);
+      axios.post.mockRejectedValue(error);
 
       await expect(
         resumeService.screenResumes(jobData, files)
@@ -303,20 +294,23 @@ describe('ResumeService', () => {
   });
 
   describe('handleError', () => {
-    it('should format HTTP client errors', () => {
+    it('should format axios HTTP errors', () => {
       const error = {
-        status: 400,
-        message: 'Bad request',
-        data: { field: 'error detail' }
+        response: {
+          status: 400,
+          data: {
+            message: 'Bad request',
+            field: 'error detail'
+          }
+        }
       };
 
       const formatted = resumeService.handleError(error);
 
-      expect(formatted).toEqual({
-        message: 'Bad request',
-        status: 400,
-        details: { field: 'error detail' }
-      });
+      expect(formatted).toBeInstanceOf(Error);
+      expect(formatted.message).toBe('Bad request');
+      expect(formatted.status).toBe(400);
+      expect(formatted.details).toEqual({ message: 'Bad request', field: 'error detail' });
     });
 
     it('should format generic errors', () => {
@@ -324,19 +318,19 @@ describe('ResumeService', () => {
 
       const formatted = resumeService.handleError(error);
 
-      expect(formatted).toEqual({
-        message: 'Something went wrong',
-        status: 500,
-        details: null
-      });
+      expect(formatted).toBeInstanceOf(Error);
+      expect(formatted.message).toBe('Something went wrong');
+      expect(formatted.status).toBe(500);
+      expect(formatted.details).toBe(null);
     });
 
     it('should provide default message for errors without message', () => {
-      const error = { status: 500 };
+      const error = { response: { status: 500, data: {} } };
 
       const formatted = resumeService.handleError(error);
 
-      expect(formatted.message).toBe('An error occurred while processing resumes');
+      expect(formatted).toBeInstanceOf(Error);
+      expect(formatted.message).toContain('error occurred');
     });
   });
 

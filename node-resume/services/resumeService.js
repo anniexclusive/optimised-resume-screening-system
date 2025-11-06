@@ -3,14 +3,13 @@
  * Business logic for resume screening operations
  */
 
+const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
 const config = require('../config/api.config');
-const logger = require('../utils/logger');
 
 class ResumeService {
-  constructor(httpClientInstance, fileServiceInstance) {
-    this.httpClient = httpClientInstance;
+  constructor(fileServiceInstance) {
     this.fileService = fileServiceInstance;
     this.pythonApiUrl = `${config.pythonApi.baseUrl}${config.pythonApi.endpoints.predictBert}`;
   }
@@ -24,7 +23,7 @@ class ResumeService {
    */
   async screenResumes(jobData, files) {
     try {
-      logger.info('[ResumeService] Starting resume screening process');
+      console.log('[ResumeService] Starting resume screening process');
 
       // Validate input
       this.validateScreeningInput(jobData, files);
@@ -32,16 +31,18 @@ class ResumeService {
       // Prepare form data
       const formData = this.prepareFormData(jobData, files);
 
-      // Send to Python API with full SRE stack: Circuit Breaker + Retry + Exponential Backoff
-      // Protects against: cascading failures, resource exhaustion, service degradation
-      logger.info(`[ResumeService] Sending ${files.length} resumes to Python API (resilient mode)`);
-      const results = await this.httpClient.postFormDataResilient(this.pythonApiUrl, formData);
+      // Send to Python API
+      console.log(`[ResumeService] Sending ${files.length} resumes to Python API`);
+      const response = await axios.post(this.pythonApiUrl, formData, {
+        headers: formData.getHeaders(),
+        timeout: config.pythonApi.timeout
+      });
 
-      logger.info('[ResumeService] Successfully received results from Python API');
-      return results;
+      console.log('[ResumeService] Successfully received results from Python API');
+      return response.data;
 
     } catch (error) {
-      logger.error('[ResumeService] Error screening resumes:', { error: error.message });
+      console.error('[ResumeService] Error screening resumes:', error.message);
       throw this.handleError(error);
     }
   }
@@ -111,21 +112,21 @@ class ResumeService {
    * Handle errors with proper formatting
    */
   handleError(error) {
-    if (error.status) {
-      // Error from HTTP client
-      return {
-        message: error.message || 'An error occurred while processing resumes',
-        status: error.status,
-        details: error.data
-      };
+    const formattedError = new Error();
+
+    if (error.response) {
+      // HTTP error from axios
+      formattedError.message = error.response.data?.message || error.message || 'An error occurred while processing resumes';
+      formattedError.status = error.response.status;
+      formattedError.details = error.response.data;
+    } else {
+      // Generic error
+      formattedError.message = error.message || 'Internal server error';
+      formattedError.status = 500;
+      formattedError.details = null;
     }
 
-    // Generic error
-    return {
-      message: error.message || 'Internal server error',
-      status: 500,
-      details: null
-    };
+    return formattedError;
   }
 
   /**
@@ -145,14 +146,12 @@ class ResumeService {
             cleanedCount++;
           }
         } catch (fileError) {
-          logger.error(`[ResumeService] Error deleting file ${file.path}:`, {
-            error: fileError.message
-          });
+          console.error(`[ResumeService] Error deleting file ${file.path}:`, fileError.message);
         }
       }
-      logger.info(`[ResumeService] Cleaned up ${cleanedCount}/${files.length} uploaded files`);
+      console.log(`[ResumeService] Cleaned up ${cleanedCount}/${files.length} uploaded files`);
     } catch (error) {
-      logger.error('[ResumeService] Error cleaning up files:', { error: error.message });
+      console.error('[ResumeService] Error cleaning up files:', error.message);
     }
   }
 }
