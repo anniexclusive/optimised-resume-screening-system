@@ -25,8 +25,8 @@
     "test:coverage": "jest --coverage",
     "dev": "nodemon app.js",
     "start": "node app.js",
-    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext .js",
-    "lint:fix": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext .js --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.js\"",
     "format:check": "prettier --check \"**/*.js\"",
     "build": "echo 'No build step required for Node.js backend' && exit 0"

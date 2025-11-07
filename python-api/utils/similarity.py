@@ -1,13 +1,13 @@
 """
-Similarity utilities using dependency injection
+Similarity utilities
 """
 
 from utils.skill_edu import degree_equivalents
-from services.similarityService import get_similarity_calculator
+from services.similarityService import BERTSimilarityCalculator
 from config.scoring_config import DEGREE_EQUIVALENTS_BOOST
 
 
-# Get the similarity calculator (injected dependency)
+# Singleton instance to avoid reloading BERT model
 _similarity_calculator = None
 
 
@@ -15,7 +15,7 @@ def get_calculator():
     """Get or create the similarity calculator instance"""
     global _similarity_calculator
     if _similarity_calculator is None:
-        _similarity_calculator = get_similarity_calculator('bert')
+        _similarity_calculator = BERTSimilarityCalculator()
     return _similarity_calculator
 
 

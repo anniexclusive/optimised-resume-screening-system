@@ -40,7 +40,7 @@ jobs:
         working-directory: ./python-api
         run: |
           pip install -r requirements.txt
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 .
           pytest
 
   # Build Docker images (only on main)

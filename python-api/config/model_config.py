@@ -26,13 +26,3 @@ FLASK_CONFIG = {
     'port': int(os.getenv('FLASK_PORT', 5000)),
     'debug': os.getenv('FLASK_DEBUG', 'false').lower() == 'true'  # Secure default: debug disabled in production
 }
-
-
-def get_model_config():
-    """Helper function to get model configuration"""
-    return BERT_CONFIG
-
-
-def get_flask_config():
-    """Helper function to get Flask configuration"""
-    return FLASK_CONFIG

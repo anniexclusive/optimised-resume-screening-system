@@ -6,7 +6,7 @@ Tests that configuration is properly loaded and validated
 import unittest
 import os
 from unittest.mock import patch
-from config.model_config import BERT_CONFIG, MODEL_LOAD_CONFIG, FLASK_CONFIG, get_model_config, get_flask_config
+from config.model_config import BERT_CONFIG, MODEL_LOAD_CONFIG, FLASK_CONFIG
 from config.scoring_config import SCORING_WEIGHTS, THRESHOLDS, EXPERIENCE_CONFIG, DEGREE_EQUIVALENTS_BOOST
 
 
@@ -50,19 +50,6 @@ class TestModelConfig(unittest.TestCase):
         self.assertIsInstance(FLASK_CONFIG['host'], str)
         self.assertIsInstance(FLASK_CONFIG['port'], int)
         self.assertIsInstance(FLASK_CONFIG['debug'], bool)
-
-    def test_get_model_config_function(self):
-        """Test get_model_config helper function"""
-        config = get_model_config()
-        self.assertEqual(config, BERT_CONFIG)
-        self.assertIn('model_name', config)
-
-    def test_get_flask_config_function(self):
-        """Test get_flask_config helper function"""
-        config = get_flask_config()
-        self.assertEqual(config, FLASK_CONFIG)
-        self.assertIn('host', config)
-        self.assertIn('port', config)
 
 
 class TestScoringConfig(unittest.TestCase):

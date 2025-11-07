@@ -17,20 +17,3 @@ extend-exclude = '''
   | \.ipynb_checkpoints
 )/
 '''
-
-[tool.pytest.ini_options]
-# This is in pytest.ini, but keeping here for reference
-testpaths = ["tests"]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
-
-[tool.pylint.messages_control]
-disable = [
-    "C0111",  # missing-docstring
-    "C0103",  # invalid-name
-    "R0903",  # too-few-public-methods
-]
-
-[tool.pylint.format]
-max-line-length = 127

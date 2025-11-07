@@ -1,6 +1,6 @@
 """
 Unit tests for Similarity Service
-Tests the similarity calculation abstraction layer
+Tests the similarity calculation
 """
 
 import pytest
@@ -8,8 +8,6 @@ import numpy as np
 from services.similarityService import (
     BERTSimilarityCalculator,
     MockSimilarityCalculator,
-    get_similarity_calculator,
-    reset_similarity_calculator
 )
 
 
@@ -126,56 +124,22 @@ class TestBERTSimilarityCalculator:
 
 
 class TestGetSimilarityCalculator:
-    """Test the factory function for similarity calculators"""
+    """Test creating similarity calculator instances"""
 
-    def setUp(self):
-        """Reset singleton before each test"""
-        reset_similarity_calculator()
-
-    def test_get_mock_calculator(self):
-        """Test getting mock calculator"""
-        reset_similarity_calculator()
-
-        calculator = get_similarity_calculator('mock')
-
-        assert isinstance(calculator, MockSimilarityCalculator)
-
-    def test_get_mock_calculator_singleton(self):
-        """Test mock calculator returns same instance"""
-        reset_similarity_calculator()
-
-        calc1 = get_similarity_calculator('mock')
-        calc2 = get_similarity_calculator('mock')
-
-        assert calc1 is calc2
-
-    @pytest.mark.slow
     def test_get_bert_calculator(self):
-        """Test getting BERT calculator"""
-        reset_similarity_calculator()
-
+        """Test creating BERT calculator"""
         try:
-            calculator = get_similarity_calculator('bert')
+            calculator = BERTSimilarityCalculator()
             assert isinstance(calculator, BERTSimilarityCalculator)
         except Exception as e:
             pytest.skip(f"BERT model not available: {e}")
 
-    def test_get_invalid_calculator_type(self):
-        """Test error handling for invalid calculator type"""
-        reset_similarity_calculator()
-
-        with pytest.raises(ValueError, match="Unknown calculator type"):
-            get_similarity_calculator('invalid_type')
-
     def test_reset_similarity_calculator(self):
-        """Test resetting the singleton"""
-        reset_similarity_calculator()
+        """Test creating multiple calculator instances"""
+        calc1 = MockSimilarityCalculator()
+        calc2 = MockSimilarityCalculator()
 
-        calc1 = get_similarity_calculator('mock')
-        reset_similarity_calculator()
-        calc2 = get_similarity_calculator('mock')
-
-        # After reset, should get a new instance
+        # Different instances
         assert calc1 is not calc2
 
 
@@ -184,8 +148,7 @@ class TestSimilarityIntegration:
 
     def test_mock_calculator_workflow(self):
         """Test complete workflow with mock calculator"""
-        reset_similarity_calculator()
-        calculator = get_similarity_calculator('mock')
+        calculator = MockSimilarityCalculator()
 
         # Test resume vs job description
         resume_text = "Python developer with 5 years of Flask experience"
@@ -198,8 +161,7 @@ class TestSimilarityIntegration:
 
     def test_multiple_similarities(self):
         """Test computing multiple similarities"""
-        reset_similarity_calculator()
-        calculator = get_similarity_calculator('mock')
+        calculator = MockSimilarityCalculator()
 
         resumes = [
             "Python developer with Flask",

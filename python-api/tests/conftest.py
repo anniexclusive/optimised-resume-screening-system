@@ -4,7 +4,7 @@ Shared fixtures for all tests
 """
 import pytest
 import os
-from services.similarityService import get_similarity_calculator, reset_similarity_calculator
+from services.similarityService import BERTSimilarityCalculator, MockSimilarityCalculator
 
 
 @pytest.fixture(scope="session")
@@ -18,12 +18,9 @@ def bert_model():
     os.environ['USE_MOCK_SIMILARITY'] = 'false'
 
     # Load model once
-    calculator = get_similarity_calculator('bert')
+    calculator = BERTSimilarityCalculator()
 
     yield calculator
-
-    # Cleanup after all tests
-    reset_similarity_calculator()
 
 
 @pytest.fixture(scope="function")
@@ -32,12 +29,9 @@ def mock_similarity():
     Function-scoped fixture for tests that don't need real BERT.
     Use this for unit tests to speed them up significantly.
     """
-    reset_similarity_calculator()
-    calculator = get_similarity_calculator('mock')
+    calculator = MockSimilarityCalculator()
 
     yield calculator
-
-    reset_similarity_calculator()
 
 
 @pytest.fixture

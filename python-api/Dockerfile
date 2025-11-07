@@ -34,6 +34,10 @@ COPY app.py .
 COPY config/ ./config/
 COPY services/ ./services/
 COPY utils/ ./utils/
+COPY download_model.py .
+
+# Download BERT model
+RUN python download_model.py || echo "Warning: Model download failed, will retry at runtime"
 
 # Create non-root user
 RUN useradd -m -u 1001 appuser && \
