@@ -6,27 +6,15 @@ import ResumeTable from '../components/ResumeTable';
 function Home() {
   const [tableData, setTableData] = useState([]);
 
-        // Handle new API response format with results array
-        if (result && result.results && Array.isArray(result.results)) {
-            setTableData([...result.results]);
-        } else if (result && Array.isArray(result)) {
-            // Fallback for old format
-            setTableData([...result]);
-        }
-
-    };
-    
-    return (
-        <div>
-            <div className="left-sidenav">
-                {/*  LOGO */}
-                <div className="brand">
-                    <a href="/" className="logo">
-                        
-                        <h2>RESUME SCREENING</h2> 
-                    </a>
-                </div>
-                {/* end logo*/}
+  const handleResult = (result) => {
+    // Handle new API response format with results array
+    if (result && result.results && Array.isArray(result.results)) {
+      setTableData([...result.results]);
+    } else if (result && Array.isArray(result)) {
+      // Fallback for old format
+      setTableData([...result]);
+    }
+  };
 
   return (
     <Layout>
