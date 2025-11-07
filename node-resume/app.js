@@ -19,8 +19,8 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
+      imgSrc: ["'self'", 'data:', 'https:']
+    }
   },
   hsts: {
     maxAge: 31536000,
@@ -87,7 +87,7 @@ app.use((req, res) => {
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error('Error:', err.message);
 
   res.status(err.status || 500).json({

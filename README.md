@@ -67,8 +67,8 @@ Simple 3-tier architecture:
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/ai-resume-screening.git
-cd ai-resume-screening
+git clone https://github.com/anniexclusive/optimised-resume-screening-system
+cd optimised-resume-screening-system
 
 # Start all services
 make up
