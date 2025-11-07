@@ -26,11 +26,14 @@ test:
 
 # Linting
 lint:
-	@echo "Running Node.js linting..."
+	@echo "Running Node.js backend linting..."
 	@cd node-resume && npm run lint
 	@echo ""
+	@echo "Running React frontend linting..."
+	@cd node-resume/client && npm run lint
+	@echo ""
 	@echo "Running Python linting..."
-	@cd python-api && python3 -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+	@cd python-api && python3 -m flake8 .
 	@echo ""
 	@echo "✅ Linting completed"
 
