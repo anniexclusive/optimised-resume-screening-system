@@ -2,7 +2,7 @@ module.exports = {
   env: {
     node: true,
     es2021: true,
-    jest: true,
+    jest: true
   },
   extends: [
     'eslint:recommended',
@@ -10,7 +10,7 @@ module.exports = {
   ],
   parserOptions: {
     ecmaVersion: 'latest',
-    sourceType: 'module',
+    sourceType: 'module'
   },
   rules: {
     // Error prevention
@@ -34,7 +34,7 @@ module.exports = {
     // Security
     'no-eval': 'error',
     'no-implied-eval': 'error',
-    'no-new-func': 'error',
+    'no-new-func': 'error'
   },
   ignorePatterns: [
     'node_modules/',

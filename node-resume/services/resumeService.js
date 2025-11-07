@@ -100,7 +100,7 @@ class ResumeService {
    * Parse and format skills
    */
   parseSkills(skillsString) {
-    if (!skillsString) return [];
+    if (!skillsString) {return [];}
 
     return skillsString
       .split(',')

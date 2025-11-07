@@ -15,12 +15,9 @@ def client():
         yield client
 
 
-@pytest.fixture
-def sample_pdf_file():
-    """Create a mock PDF file for testing with sufficient content"""
-    # Create a realistic PDF with enough text content (>50 chars minimum)
-    # This simulates a real resume with skills, experience, and education
-    pdf_content = b"""%PDF-1.4
+def _create_test_pdf():
+    """Helper function to create PDF content (not a fixture)"""
+    return b"""%PDF-1.4
 1 0 obj
 <<
 /Type /Catalog
@@ -133,7 +130,18 @@ startxref
 857
 %%EOF"""
 
-    return (io.BytesIO(pdf_content), 'test_resume.pdf')
+
+@pytest.fixture
+def sample_pdf_file():
+    """Create a mock PDF file for testing with sufficient content
+
+    Returns a fresh BytesIO object for each test to avoid issues
+    with parallel test execution (pytest-xdist)
+    """
+    pdf_content = _create_test_pdf()
+    pdf_buffer = io.BytesIO(pdf_content)
+    pdf_buffer.seek(0)  # Ensure position is at start
+    return (pdf_buffer, 'test_resume.pdf')
 
 
 @pytest.fixture
@@ -310,9 +318,10 @@ class TestPredictBertEndpoint:
         """Test with multiple resume files"""
         pdf_file1, filename1 = sample_pdf_file
 
-        # Create second PDF
-        pdf_content2 = pdf_file1.getvalue()
+        # Create second PDF using helper function
+        pdf_content2 = _create_test_pdf()
         pdf_file2 = io.BytesIO(pdf_content2)
+        pdf_file2.seek(0)
         filename2 = 'test_resume_2.pdf'
 
         data = {
@@ -345,9 +354,10 @@ class TestPredictBertEndpoint:
         """Test that results are sorted by total score descending"""
         pdf_file1, filename1 = sample_pdf_file
 
-        # Create second PDF
-        pdf_content2 = pdf_file1.getvalue()
+        # Create second PDF using helper function
+        pdf_content2 = _create_test_pdf()
         pdf_file2 = io.BytesIO(pdf_content2)
+        pdf_file2.seek(0)
         filename2 = 'test_resume_2.pdf'
 
         data = {
